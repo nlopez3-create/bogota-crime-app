@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mapa del crimen en bogota - Interactive Crime Visualization</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="mapa del crimen en bogotá, Colombia. Visualizar incidentes de crimen con estadísticas detalladas, opciones de filtrado y datos en tiempo real desde el portal de datos abiertos de la ciudad.">
+    <meta name="keywords" content="bogota, crime, heatmap, colombia, safety, statistics, delitos, seguridad, mapa, datos abiertos, crimen, homicidio, hurtos, lesiones, secuestros, hurto a personas, hurto a residencias, hurto a comercios, hurto a automotores">
+    <meta name="author" content="mapa del crimen en bogotá">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph Meta Tags for Social Sharing -->
+    <meta property="og:title" content="mapa del crimen en bogotá - Interactive Crime Visualization">
+    <meta property="og:description" content="explorar patrones de crimen en bogotá con mapas interactivos, información detallada de incidentes y estadísticas.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://your-domain.com">
+    <meta property="og:image" content="https://your-domain.com/og-image.png">
+    <meta property="og:site_name" content="mapa del crimen en bogotá">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="mapa del crimen en bogotá">
+    <meta name="twitter:description" content="Interactive crime visualization for Bogotá, Colombia">
+    <meta name="twitter:image" content="https://your-domain.com/og-image.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'helvetica', sans-serif;
+            text-transform: lowercase;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 2px solid black;
+        }
+
+        .header h1 {
+            color: black;
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .controls {
+            background: white;
+            padding: 1rem 2rem;
+            margin: 1rem 2rem;
+            border: 2px solid black;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: black;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 0.5rem;
+            border: 2px solid black;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+            font-family: 'helvetica', sans-serif;
+            text-transform: lowercase;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: #333;
+        }
+
+        .btn {
+            background: black;
+            color: white;
+            border: 2px solid black;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-family: 'helvetica', sans-serif;
+            text-transform: lowercase;
+        }
+
+        .btn:hover {
+            background: white;
+            color: black;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #ccc;
+            border-top: 3px solid black;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .map-container {
+            margin: 1rem 2rem 2rem;
+            overflow: hidden;
+            border: 2px solid black;
+        }
+
+        #map {
+            height: 70vh;
+            min-height: 500px;
+        }
+
+        .stats {
+            background: white;
+            padding: 1rem 2rem;
+            margin: 1rem 2rem;
+            border: 2px solid black;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: black;
+            display: block;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .error {
+            background: black;
+            color: white;
+            padding: 1rem 2rem;
+            margin: 1rem 2rem;
+            border: 2px solid black;
+            text-align: center;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-group {
+                justify-content: space-between;
+            }
+            
+            .map-container {
+                margin: 1rem;
+            }
+            
+            .stats {
+                margin: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗺️ mapa del crimen en bogotá</h1>
+        <p>visualizando incidentes de crimen en bogotá con un mapa interactivo e información detallada</p>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="crimeType">tipo de crimen Type:</label>
+            <select id="crimeType">
+                <option value="all">Todos los crímenes</option>
+                <option value="Homicidio">Homicidio</option>
+                <option value="Hurto a Personas">Hurto a Personas</option>
+                <option value="Lesiones Personales">Lesiones Personales</option>
+                <option value="Secuestro">Secuestro</option>
+                <option value="Hurto a Residencias">Hurto a Residencias</option>
+                <option value="Hurto a Comercios">Hurto a Comercios</option>
+                <option value="Hurto a Automotores">Hurto a Automotores</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label for="dateFrom">Desde:</label>
+            <input type="date" id="dateFrom">
+        </div>
+        
+        <div class="control-group">
+            <label for="dateTo">Hasta:</label>
+            <input type="date" id="dateTo">
+        </div>
+        
+        <button class="btn" onclick="updateMap()">Actualizar Mapa</button>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Cargando datos de crimen...</p>
+    </div>
+
+    <div class="error" id="error"></div>
+
+    <div class="stats" id="stats">
+        <div class="stat-item">
+            <span class="stat-number" id="totalCrimes">-</span>
+            <div class="stat-label">Total de incidentes</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="homicidios">-</span>
+            <div class="stat-label">Homicidios</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="hurtos">-</span>
+            <div class="stat-label">Hurtos</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="lesiones">-</span>
+            <div class="stat-label">Lesiones</div>
+        </div>
+    </div>
+
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet.heat JavaScript -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <!-- Application JavaScript -->
+    <script src="app.js"></script>
+    
+    <style>
+        .custom-tooltip {
+            background: black !important;
+            color: white !important;
+            border: 2px solid white !important;
+            padding: 8px 12px !important;
+            font-size: 14px !important;
+            font-family: 'helvetica', sans-serif !important;
+            text-transform: lowercase !important;
+        }
+        
+        .custom-tooltip::before {
+            border-top-color: black !important;
+        }
+    </style>
+</body>
+</html>

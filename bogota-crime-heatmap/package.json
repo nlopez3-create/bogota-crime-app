@@ -1,0 +1,32 @@
+{
+  "name": "bogota-crime-heatmap",
+  "version": "1.0.0",
+  "description": "A web application that visualizes crime incidents in Bogotá, Colombia using interactive heatmaps",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 server.py",
+    "dev": "python3 server.py 3000",
+    "serve": "python3 -m http.server 8000"
+  },
+  "keywords": [
+    "bogota",
+    "crime",
+    "heatmap",
+    "visualization",
+    "leaflet",
+    "open-data",
+    "colombia"
+  ],
+  "author": "nicolas lopez",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nlopez3-create/bogota-crime-heatmap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nlopez3-create/bogota-crime-heatmap/issues"
+  },
+  "homepage": "https://github.com/nlopez3-create/bogota-crime-heatmap#readme"
+}
